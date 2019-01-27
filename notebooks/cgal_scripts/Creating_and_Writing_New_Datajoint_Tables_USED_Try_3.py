@@ -4,6 +4,13 @@
 # In[ ]:
 
 
+import cgal_Segmentation_Module as csm
+#help(csm)
+
+
+# In[ ]:
+
+
 #####2 goals
 """1)  create the final datajoint tables to store the final spine meshs in:
     a. One table to store the segment data (linked to the components table)
@@ -55,7 +62,7 @@
 
 
 
-# In[3]:
+# In[ ]:
 
 
 import datajoint as dj
@@ -68,7 +75,7 @@ import math
 #from funconnect import ta3
 
 
-# In[4]:
+# In[ ]:
 
 
 #setting the address and the username
@@ -76,7 +83,7 @@ dj.config['database.host'] = '10.28.0.34'
 dj.config['database.user'] = 'celiib'
 dj.config['database.password'] = 'newceliipass'
 dj.config['safemode']=True
-dj.config["display.limit"] = 400
+dj.config["display.limit"] = 20
 
 
 # user: celiib
@@ -85,7 +92,7 @@ dj.config["display.limit"] = 400
 # schemas: microns_% and celiib_%
 
 
-# In[5]:
+# In[ ]:
 
 
 schema = dj.schema('microns_ta3p100')
@@ -96,11 +103,12 @@ ta3p100 = dj.create_virtual_module('ta3p100', 'microns_ta3p100')
 
 
 #if temp folder doesn't exist then create it
+import os
 if (os.path.isdir(os.getcwd() + "/temp")) == False:
     os.mkdir("temp")
 
 
-# In[6]:
+# In[ ]:
 
 
 import os
@@ -153,12 +161,6 @@ def generate_component_off_file(neuron_ID, compartment_type, component_id, n_ver
 # In[ ]:
 
 
-#get the neuron names from the component table
-
-
-# In[7]:
-
-
 #################THE ONE WE ARE USING
 import cgal_Segmentation_Module as csm
 import csv
@@ -182,8 +184,6 @@ class ComponentAutoSegment(dj.Computed):
     third_q      : decimal(6,5) #the upper quartile for the mean width values
     ninety_perc  : decimal(6,5) #the 90th percentile for the mean width values
     time_updated : timestamp    # the time at which the segmentation was performed
-   
-    
    """
     
     key_source = ta3p100.Compartment.Component & 'n_triangle_indices>100' & [dict(compartment_type=comp) for comp in ['Basal', 'Apical', 'Oblique', 'Dendrite']]
@@ -191,6 +191,7 @@ class ComponentAutoSegment(dj.Computed):
     whole_neuron_dicts = dict()
     
     def make(self, key):
+        print("key = " + str(key))
         #key passed to function is just dictionary with the following attributes
         """segmentation
         segment_id
@@ -252,6 +253,7 @@ class ComponentAutoSegment(dj.Computed):
             print(len(component['vertex_indices']), len(component['triangle_indices']))
             
             #will have generated the component file by now so now need to run the segmentation
+
             csm.cgal_segmentation(path_and_filename,clusters,smoothness)
 
             #generate the name of the files
@@ -259,26 +261,42 @@ class ComponentAutoSegment(dj.Computed):
             group_csv_cgal_file = cgal_file_name + ".csv"
             sdf_csv_file_name = cgal_file_name+"_sdf.csv"
 
+            
+            try:
+                with open(group_csv_cgal_file) as f:
+                  reader = csv.reader(f)
+                  your_list = list(reader)
+                group_list = []
+                for item in your_list:
+                    group_list.append(int(item[0]))
 
-            with open(group_csv_cgal_file) as f:
-              reader = csv.reader(f)
-              your_list = list(reader)
-            group_list = []
-            for item in your_list:
-                group_list.append(int(item[0]))
-
-            with open(sdf_csv_file_name) as f:
-              reader = csv.reader(f)
-              your_list = list(reader)
-            sdf_list = []
-            for item in your_list:
-                sdf_list.append(float(item[0]))
+                with open(sdf_csv_file_name) as f:
+                  reader = csv.reader(f)
+                  your_list = list(reader)
+                sdf_list = []
+                for item in your_list:
+                    sdf_list.append(float(item[0]))
+            except:
+                print("no CGAL segmentation for " + str(off_file_name) )
+                return
 
             #print(group_list)
             #print(sdf_list)
 
             #now write them to the datajoint table  
             #table columns for ComponentAutoSegmentation: segmentation, segment_id, decimation_ratio, compartment_type, component_index, seg_group, sdf
+#             print(dict(key,
+#                                 clusters=clusters,
+#                                 smoothness=smoothness,
+#                                 n_triangles=component["n_triangle_indices"],
+#                                 seg_group=group_list,
+#                                 sdf=sdf_list,
+#                                 median_sdf=np.median(sdf_list),
+#                                 mean_sdf=np.mean(sdf_list),
+#                                 third_q=np.percentile(sdf_list, 75),
+#                                 ninety_perc=np.percentile(sdf_list, 90),
+#                                 time_updated=str(datetime.datetime.now())[0:19]))
+            
             comp_dict = dict(key,
                                 clusters=clusters,
                                 smoothness=smoothness,
@@ -307,7 +325,7 @@ class ComponentAutoSegment(dj.Computed):
         print("--- %s seconds ---" % (time.time() - start_time))
 
 
-# In[8]:
+# In[ ]:
 
 
 ComponentAutoSegment.populate(reserve_jobs=True)
