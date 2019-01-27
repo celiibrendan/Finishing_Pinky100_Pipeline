@@ -30,6 +30,7 @@ RUN pip3 install -e /src/CGAL
 WORKDIR /notebooks
 
 #add the cgal scripts
+EXPOSE 8890
 
 RUN mkdir -p /scripts
 ADD ./jupyter/run_jupyter.sh /scripts/
