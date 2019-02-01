@@ -74,5 +74,5 @@ class DecimationOrphan(dj.Computed):
         print(time.time() - start)
 
 start = time.time()
-Decimation.populate(reserve_jobs=True)
+DecimationOrphan.populate(reserve_jobs=True)
 print(time.time() - start)
