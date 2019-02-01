@@ -11,7 +11,7 @@ services:
       - DISPLAY=$DISPLAY
       - XSOCK=/tmp/.X11-unix/X0
     ports:
-      - "8888:8888"
+      - "8891:8888"
     volumes:
       - /tmp:/tmp
       - /tmp/.X11-unix:/tmp/.X11-unix
