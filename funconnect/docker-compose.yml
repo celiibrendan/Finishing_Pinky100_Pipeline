@@ -1,0 +1,59 @@
+
+
+version: '2'
+services:
+  notebook:
+    image: anatomy
+    build:
+      context: .
+    env_file: .env
+    environment:
+      - DISPLAY=$DISPLAY
+      - XSOCK=/tmp/.X11-unix/X0
+    ports:
+      - "8888:8888"
+    volumes:
+      - /tmp:/tmp
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - ./notebooks:/notebooks
+      - $HOME/.Xauthority:/root/.Xauthority:rw
+      - .:/src/funconnect
+      - $HOME/Dropbox/FunctionalAnatomy:/notebooks/figures
+
+  shared:
+    image: anatomy
+    build:
+      context: .
+    env_file: .env
+    environment:
+      - DISPLAY=$DISPLAY
+      - XSOCK=/tmp/.X11-unix/X0
+    ports:
+      - "8888:8888"
+    volumes:
+      - /tmp:/tmp
+      - .:/src/funconnect
+      - ./notebooks:/notebooks
+      - $NOTEBOOKS:/notebooks/shared
+      - $FIGURES:/notebooks/figures
+    network_mode: "host"
+
+  custom:
+    image: anatomy-custom
+    build:
+      context: .
+    env_file: .env
+    environment:
+      - DISPLAY=$DISPLAY
+      - XSOCK=/tmp/.X11-unix/X0
+    ports:
+      - "8888:8888"
+    volumes:
+      - /tmp:/tmp
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - $HOME/code/funconnect:/src/funconnect
+      - $HOME/Dropbox/FunctionalAnatomy:/notebooks/figures/
+      - ./notebooks:/notebooks
+      - $HOME/.Xauthority:/root/.Xauthority:rw
+    network_mode: "host"
+
