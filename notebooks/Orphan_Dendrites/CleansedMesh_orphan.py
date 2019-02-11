@@ -99,6 +99,7 @@ class CleansedMeshOrphan(dj.Computed):
 
         vertices = mesh_copy['vertices']
         triangles = mesh_copy['triangles']
+        vertex_list = list(vertices)
 
         if len(isolated_nodes) > 0:
             num_isolated_nodes_passed = 0
@@ -116,8 +117,6 @@ class CleansedMeshOrphan(dj.Computed):
                 triangles[i][0] -= count_to_decrement[node1]
                 triangles[i][1] -= count_to_decrement[node2]
                 triangles[i][2] -= count_to_decrement[node3]
-
-            vertex_list = list(vertices)
             for i, isolated_node in enumerate(isolated_nodes):
                 vertex_list.pop(isolated_node - i)
 
@@ -125,7 +124,6 @@ class CleansedMeshOrphan(dj.Computed):
 
         return mesh_copy
     
-    key_source = ta3p100.DecimationOrphan
     
     def make(self, key):
         full_start = time.time()
@@ -154,7 +152,7 @@ class CleansedMeshOrphan(dj.Computed):
         key['vertices'] = mesh['vertices']
         key['triangles'] = mesh['triangles']
         
-        self.insert1(key)
+        self.insert1(key, skip_duplicates=True)
         print(key['segment_id'], "key successfully inserted.", time.time() - start)
         start = time.time()
         
@@ -166,7 +164,7 @@ class CleansedMeshOrphan(dj.Computed):
 
 
 start = time.time()
-CleansedMeshOrphan().populate()#reserve_jobs=True)
+CleansedMeshOrphan().populate(reserve_jobs=True)
 print("Final:", time.time() - start)
 
 
